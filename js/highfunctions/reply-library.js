@@ -13,46 +13,6 @@ let _searchQuery = '';
 let _searchDebounceTimer = null;
 let _activeGroupFilter = null; 
 
-/*const CallBgDB = {
-  db: null,
-  storeName: 'callbg_files',
-  init() {
-    return new Promise((resolve, reject) => {
-      if (this.db) return resolve(this.db);
-      const req = indexedDB.open('ChatApp_CallBgDB', 1);
-      req.onupgradeneeded = e => e.target.result.createObjectStore(this.storeName, { keyPath: 'id' });
-      req.onsuccess = e => { this.db = e.target.result; resolve(this.db); };
-      req.onerror = e => reject(e.target.error);
-    });
-  },
-  put(id, file) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.storeName, 'readwrite');
-      tx.objectStore(this.storeName).put({ id, file });
-      tx.oncomplete = () => resolve();
-      tx.onerror = (e) => reject(e.target.error);
-    });
-  },
-  get(id) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.storeName, 'readonly');
-      const req = tx.objectStore(this.storeName).get(id);
-      req.onsuccess = () => resolve(req.result ? req.result.file : null);
-      req.onerror = (e) => reject(e.target.error);
-    });
-  },
-  delete(id) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(this.storeName, 'readwrite');
-      tx.objectStore(this.storeName).delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = (e) => reject(e.target.error);
-    });
-  }
-};
-CallBgDB.init().catch(e => console.error('CallBgDB初始化失败', e));*/
-
-
 const GROUP_COLORS = [
     '#FF6B6B','#FF8E53','#FFC542','#51CF66',
     '#20C997','#4DABF7','#748FFC','#DA77F2',
