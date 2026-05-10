@@ -21,10 +21,19 @@ window.APP_DATA_REGISTRY = [
       getValue: () => (typeof DB_GATEWAY !== 'undefined' ? DB_GATEWAY.get('anniversaries') : null) || [], 
       setValue: (v) => { if(typeof DB_GATEWAY !== 'undefined') DB_GATEWAY.set('anniversaries', v); } 
     },
-    { id: 'calendarEvents', name: '心情与日程', icon: 'fa-calendar-alt', backup: true, 
+ /*   { id: 'calendarEvents', name: '心情与日程', icon: 'fa-calendar-alt', backup: true, 
       getValue: () => (typeof DB_GATEWAY !== 'undefined' ? DB_GATEWAY.get('calendarEvents') : null) || [], 
       setValue: (v) => { if(typeof DB_GATEWAY !== 'undefined') DB_GATEWAY.set('calendarEvents', v); } 
+    },*/
+    { id: 'calendarEvents', name: '日程记录', icon: 'fa-calendar-alt', backup: true,
+        getValue: () => (typeof DB_GATEWAY !== 'undefined' ? DB_GATEWAY.get('calendarEvents') : null) || [],
+        setValue: (v) => { if(typeof DB_GATEWAY !== 'undefined') DB_GATEWAY.set('calendarEvents', v); }
     },
+    { id: 'moodData', name: '心情记录', icon: 'fa-cloud-sun', backup: true,
+        getValue: () => (typeof DB_GATEWAY !== 'undefined' ? DB_GATEWAY.get('moodCalendar') : null) || {},
+        setValue: (v) => { if(typeof DB_GATEWAY !== 'undefined') DB_GATEWAY.set('moodCalendar', v); window.moodData = v; }
+    },
+
     { id: 'periodRecords', name: '月经周期记录', icon: 'fa-calendar-check', backup: true, 
       getValue: () => (typeof DB_GATEWAY !== 'undefined' ? DB_GATEWAY.get('periodRecords') : null) || [], 
       setValue: (v) => { if(typeof DB_GATEWAY !== 'undefined') DB_GATEWAY.set('periodRecords', v); } 
