@@ -58,6 +58,7 @@ function immediateSaveData() {
 }
 
 
+
 document.addEventListener('DOMContentLoaded', async () => {
     const loaderBar = document.getElementById('loader-tech-bar');
     const welcomeSubtitle = document.querySelector('.welcome-subtitle-scramble');
@@ -162,16 +163,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
-
+        window._isDataReady = true; 
         updateLoader('连接成功，欢迎回来。', '100%');
         setTimeout(hideWelcomeScreen, 3500);
 
-        document.addEventListener('visibilitychange', () => {
+        /*document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
                 clearTimeout(saveTimeout);
                 saveData().catch(e => console.error('[visibilitychange] 保存失败:', e));
             }
+        });*/
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                clearTimeout(saveTimeout);
+                // 修复：切后台必须让管家把内存里的最新数据强制刷进硬盘
+                if (typeof DB_GATEWAY !== 'undefined') {
+                    DB_GATEWAY.forceSaveAll().catch(e => console.error('[visibilitychange] 保存失败:', e));
+                } else {
+                    saveData().catch(e => console.error('[visibilitychange] 保存失败:', e));
+                }
+            }
         });
+
 
         setInterval(() => {
             saveData().catch(e => console.warn('[autoBackup] 定时保存失败:', e));

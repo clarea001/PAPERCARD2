@@ -79,7 +79,7 @@ window._setRegVal = (id, val) => {
         reg.onImport(val);
     }
 };
-
+window._isDataReady = false; // 数据加载锁，防止没加载完就保存
 let SESSION_ID = null;
 let autoSendTimer = null;
 let wishingPoolData = []; 

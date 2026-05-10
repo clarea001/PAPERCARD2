@@ -616,7 +616,8 @@ async function loadData() {
         if (savedBgGallery) {
             savedBackgrounds = savedBgGallery;
         } else {
-            savedBackgrounds = [{ id: 'preset-1', type: 'color', value: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }];
+            savedBackgrounds = ['linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'];
+            //savedBackgrounds = [{ id: 'preset-1', type: 'color', value: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }];
         }
 
         // 11. 其他小项加载 (核心：彻底统一赋值逻辑)
@@ -768,7 +769,7 @@ window.deleteAnniversaryItem = function(id) {
             console.warn('[saveData] SESSION_ID 尚未初始化，跳过保存');
             return;
         }*/
-
+        if (!window._isDataReady) return;
         try {
             // 1. 将文字配置交给新网关的 APP_DATA 仓库
             DB_GATEWAY.set('chatSettings', settings);
@@ -1447,14 +1448,26 @@ window.deleteAnniversaryItem = function(id) {
         }        
 
         // 在 core.js 中添加
-        function immediateSaveData() {
+       /*function immediateSaveData() {
             return saveData().then(() => {
                 console.log('[immediateSaveData] 数据已立即保存');
             }).catch(e => {
                 console.error('[immediateSaveData] 保存失败:', e);
                 showNotification('数据保存失败，请检查存储空间', 'error');
             });
+        }*/
+        async function immediateSaveData() {
+            try {
+                await saveData(); // 先把最新数据塞进管家缓存
+                if (typeof DB_GATEWAY !== 'undefined') {
+                    await DB_GATEWAY.forceSaveAll(); // 再强制刷盘
+                }
+            } catch (e) {
+                console.error('[immediateSaveData] 保存失败:', e);
+                showNotification('数据保存失败，请检查存储空间', 'error');
+            }
         }
+
 
         // 新增：打断对方的回复（停止计时器 + 隐藏正在输入）
         window.cancelPartnerReply = function() {
@@ -2071,6 +2084,7 @@ window.deleteAnniversaryItem = function(id) {
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            window._isDataReady = false;
             const layer = document.getElementById('real-bg-layer');
             // 等待数据加载完后再应用保存的模式
             setTimeout(() => {

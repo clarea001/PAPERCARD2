@@ -1020,6 +1020,16 @@ document.getElementById('chat-settings').addEventListener('click', () => {
                     showNotification('时间格式已更新', 'success');
                 });
             });
+            
+            const globalCssTextareaEl = document.getElementById('custom-global-css');
+            if (globalCssTextareaEl) {
+                globalCssTextareaEl.value = settings.customGlobalCss || '';
+                globalCssTextareaEl.addEventListener('change', () => {
+                    settings.customGlobalCss = globalCssTextareaEl.value.trim();
+                    throttledSaveData();
+                    applyGlobalThemeCss(settings.customGlobalCss);
+                });
+            }
 
             document.getElementById('appearance-settings').addEventListener('click', () => {
                 hideModal(DOMElements.settingsModal.modal);

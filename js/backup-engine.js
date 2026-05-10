@@ -721,7 +721,9 @@
         }
 
         // 打上最新版标签，告诉 loadData 安心读新仓库
-        await localforage.setItem('APP_META', { version: 6.0 });
+       // await localforage.setItem('APP_META', { version: 6.0 });
+// 修复：必须与 DB_GATEWAY.VERSION 对齐！
+        await localforage.setItem('APP_META', { version: DB_GATEWAY.VERSION });
 
         showNotification('备份已完美适配新架构，页面即将刷新！', 'success', 3000);
         setTimeout(() => window.location.reload(), 2000);
@@ -914,6 +916,10 @@
     try {
         if (typeof showNotification === 'function') showNotification('正在准备底层无损打包...', 'info', 2000);
         await saveData();
+        // 修复：导出前必须让管家把缓存强制刷进硬盘，否则导出的是旧数据
+        if (typeof DB_GATEWAY !== 'undefined') {
+            await DB_GATEWAY.forceSaveAll();
+        }
         if (typeof JSZip === 'undefined') {
             throw new Error('JSZip 组件未加载，无法进行无损打包');
         }
@@ -1288,9 +1294,24 @@
                         pureTextData.chatSettings.activeLocalFontId = pureFontList.length > 0 ? pureFontList[0].id : '';
                     }
 
+                   /* await localforage.setItem('APP_DATA', pureTextData);
+                    await localforage.setItem('APP_MEDIA', pureMediaData);
+                    await localforage.setItem('APP_META', { version: 6.1 });*/
+                    // 写入硬盘后，必须强制同步管家的内存缓存！
                     await localforage.setItem('APP_DATA', pureTextData);
                     await localforage.setItem('APP_MEDIA', pureMediaData);
-                    await localforage.setItem('APP_META', { version: 6.1 });
+                    await localforage.setItem('APP_META', { version: DB_GATEWAY.VERSION });
+
+                    // 🌟 关键修复：让管家立刻感知到新数据，防止内存旧数据覆盖硬盘
+                    if (typeof DB_GATEWAY !== 'undefined') {
+                        DB_GATEWAY._dataCache = pureTextData;
+                        DB_GATEWAY._mediaCache = pureMediaData;
+                        // 清空所有防抖定时器，防止幽灵保存
+                        if (DB_GATEWAY._dataTimer) clearTimeout(DB_GATEWAY._dataTimer);
+                        if (DB_GATEWAY._mediaTimer) clearTimeout(DB_GATEWAY._mediaTimer);
+                        if (DB_GATEWAY._fontsTimer) clearTimeout(DB_GATEWAY._fontsTimer);
+                    }
+
                     
                     if (typeof showNotification === 'function') showNotification('无损还原完成，页面即将刷新', 'success');
                     setTimeout(() => window.location.reload(), 1500);
