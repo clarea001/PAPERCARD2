@@ -128,7 +128,7 @@ function initChatActionListeners() {
         return false;
     });
 
-// ========== 继续回复弹出按钮组逻辑 ==========
+/*// ========== 继续回复弹出按钮组逻辑 ==========
 const continueBtn = document.getElementById('continue-btn');
 const continueSubBtns = document.getElementById('continue-sub-btns');
 const continueReplyBtn = document.getElementById('continue-reply-btn');
@@ -180,9 +180,91 @@ document.addEventListener('click', (e) => {
     if (continueSubBtns && !continueSubBtns.contains(e.target)) {
         continueSubBtns.classList.remove('active');
     }
-});
+});*/
+    // ========== 继续回复弹出按钮组逻辑（统一拦截与分发架构） ==========
+    const continueBtn = document.getElementById('continue-btn');
+    const continueSubBtns = document.getElementById('continue-sub-btns');
 
+    // 1. 统一拦截所有子按钮的点击
+    if (continueSubBtns) {
+        continueSubBtns.addEventListener('click', (e) => {
+            // 找到被点击的子按钮（包括继续回复、发送图片、打断回复）
+            const subBtn = e.target.closest('button');
+            if (!subBtn) return; 
+
+            // 核心1：不管点了哪个子按钮，菜单立刻收起！
+            continueSubBtns.classList.remove('active');
+
+            // 核心2：阻止冒泡和默认行为，防止触发外层的"更多操作"按钮
+            e.stopPropagation();
+            e.preventDefault();
+
+            // 核心3：延迟 50 毫秒执行业务逻辑
+            // 这是解决“发图片”无效的关键：给浏览器一帧的时间完成菜单收起的重绘
+            // 这样文件选择框就是在"菜单已关闭"的安全状态下触发的，不会被浏览器拦截
+            setTimeout(() => {
+                if (subBtn.id === 'continue-reply-btn') {
+                    // 业务：继续回复
+                    if (typeof simulateReply === 'function') simulateReply();
+                    
+                } else if (subBtn.id === 'attachment-btn') {
+                    // 业务：发送图片
+                    const imageInput = document.getElementById('image-input');
+                    if (imageInput) {
+                        // 🌟 关键修复：如果之前已经绑过，先解绑，防止重复发送
+                        imageInput.onchange = null;
+                        
+                        // 唤醒文件选择框
+                        imageInput.click();
+                        
+                        // 🌟 核心：监听文件选择完成，选完立刻自动发送！
+                        imageInput.onchange = function() {
+                            const file = this.files[0];
+                            if (file) {
+                                // 调用 core.js 里的 sendMessage，传入图片文件
+                                sendMessage();
+                            }
+                            // 清空 input，确保选同一张图也能再次触发 change
+                            this.value = '';
+                        };
+                    }
+                } else if (subBtn.id === 'shutUpBtn') {
+                    // 业务：打断对方回复
+                    if (typeof window.cancelPartnerReply === 'function') {
+                        window.cancelPartnerReply();
+                        showNotification('已打断对方回复', 'success', 1500);
+                    }
+                }
+            }, 50); 
+        });
+    }
+
+    // 2. "更多操作"大按钮的切换逻辑
+    if (continueBtn) {
+        continueBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = continueSubBtns.classList.contains('active');
+            // 先关闭页面上所有其他弹出层（避免叠加）
+            document.querySelectorAll('.continue-sub-btns.active').forEach(el => {
+                if (el !== continueSubBtns) el.classList.remove('active');
+            });
+            // 切换当前菜单的显示/隐藏
+            if (isActive) {
+                continueSubBtns.classList.remove('active');
+            } else {
+                continueSubBtns.classList.add('active');
+            }
+        });
+    }
+
+    // 3. 点击页面其他任意位置，自动收起弹出菜单
+    document.addEventListener('click', (e) => {
+        if (continueSubBtns && !continueSubBtns.contains(e.target)) {
+            continueSubBtns.classList.remove('active');
+        }
+    });
 }
+
 function initModalListeners() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
@@ -1346,7 +1428,7 @@ document.getElementById('chat-settings').addEventListener('click', () => {
                 DOMElements.messageInput.style.height = `${Math.min(DOMElements.messageInput.scrollHeight, 120)}px`;
             });
 
-            // ========== 底部栏发送图片按钮绑定 ==========
+           /* // ========== 底部栏发送图片按钮绑定 ==========
             const attachmentBtn = document.getElementById('attachment-btn');
             const imageInput = document.getElementById('image-input');
             if (attachmentBtn && imageInput) {
@@ -1355,7 +1437,8 @@ document.getElementById('chat-settings').addEventListener('click', () => {
                     e.stopPropagation();
                     imageInput.click(); // 唤醒系统的图片选择框
                 });
-            }
+            }*/
+
 
 
             // 回车发送消息功能（Shift+Enter依然是换行）
@@ -1373,8 +1456,6 @@ document.getElementById('chat-settings').addEventListener('click', () => {
         
         } // 🌟 这里是函数结尾的大括号，千万别漏了
 
-
-       // DOMElements.continueBtn.addEventListener('click', simulateReply);
 
         function _applyCollapseState(on) {
             document.body.classList.toggle('bottom-collapse-mode', on);
